@@ -3,12 +3,14 @@
 try:
     from importlib.metadata import PackageNotFoundError, version
 except ImportError:
-    from importlib_metadata import PackageNotFoundError, version
+    from importlib_metadata import PackageNotFoundError, version  # noqa
 
 try:
-    __version__ = version("pupil_labs.project_name")
+    __version__ = version("pupil_labs.camera")
 except PackageNotFoundError:
     # package is not installed
     pass
 
-__all__ = ["__version__"]
+from .radial import CameraRadial
+
+__all__ = ["__version__", "CameraRadial"]
