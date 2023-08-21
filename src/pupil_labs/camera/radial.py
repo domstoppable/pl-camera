@@ -24,7 +24,6 @@ def check_camera_matrix(camera_matrix: CT.CameraMatrixLike) -> CT.CameraMatrix:
     return camera_matrix
 
 
-@staticmethod
 def check_distortion_coefficients(
     distortion_coefficients: CT.DistortionCoefficientsLike,
 ) -> CT.DistortionCoefficients:
