@@ -78,7 +78,7 @@ def undistort_rectify_map(
         None,
         new_camera_matrix,
         (width, height),
-        cv2.CV_32FC1,  # noqa
+        cv2.CV_32FC1,  # type: ignore
     )
     return map1, map2
 
