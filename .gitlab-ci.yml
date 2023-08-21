@@ -82,7 +82,8 @@ test:python311:
 
 pages:
   script:
-    - pip install sphinx sphinx-rtd-theme
+    - pip install sphinx-rtd-theme
+    - pip install -e ".[docs]"
     - cd docs
     - make html
     - mv build/html/ ../public/
