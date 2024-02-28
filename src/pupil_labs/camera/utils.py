@@ -1,3 +1,5 @@
+from typing import Optional
+
 import numpy as np
 import numpy.typing as npt
 from numpy.lib.recfunctions import structured_to_unstructured
@@ -81,13 +83,53 @@ def apply_distortion_model(point, dist_coeffs):
     return np.asarray([x_dist, y_dist])
 
 
-def convert_points_to_unstructured_numpy(
+def to_np_point_array(
     points: CT.Points2DLike | CT.Points3DLike,
+    n_coords: int = 2,
 ) -> npt.NDArray[np.float64]:
+    """
+    Convert a python, numpy or structured array of points into unstructured
+
+    Examples:
+        >>> to_np_point_array([1, 10])
+        array([[ 1., 10.]])
+        >>> to_np_point_array([(1, 10), (2, 20)])
+        array([[ 1., 10.],
+               [ 2., 20.]])
+        >>> to_np_point_array([(1, 10, 100), (2, 20, 200)])
+        array([[ 1., 10.],
+               [ 2., 20.]])
+        >>> to_np_point_array([(1, 10, 100), (2, 20, 200)], n_coords=3)
+        array([[  1.,  10., 100.],
+               [  2.,  20., 200.]])
+        >>> to_np_point_array([1, 10])
+        array([[ 1., 10.]])
+        >>> to_np_point_array(
+        ...     np.array([(1, 10), (2, 20)],
+        ...     dtype=[("x", np.int32), ("y", np.int32)])
+        ... )
+        array([[ 1., 10.],
+               [ 2., 20.]])
+
+    """
+    if not len(points):
+        return np.array([], dtype=np.float64).reshape((-1, n_coords))
+
     if hasattr(points, "dtype") and points.dtype.names is not None:
-        np_points = structured_to_unstructured(points, dtype=np.float64)
+        if n_coords > len(points.dtype.names):
+            raise ValueError(
+                f"can not convert {len(points.dtype.names)}D points to {n_coords}D"
+            )
+        np_points = structured_to_unstructured(points, dtype=np.float64)[:, :n_coords]
     else:
         np_points = np.asarray(points, dtype=np.float64)
-        n_coords = np_points.shape[-1]
-        np_points = np_points.reshape((-1, 1, n_coords))
+        data_n_coords = (
+            np_points.shape[0] if np_points.ndim == 1 else np_points.shape[1]
+        )
+        if n_coords > data_n_coords:
+            raise ValueError(f"can not convert {data_n_coords}D points to {n_coords}D")
+        if np_points.ndim == 1:
+            np_points = np_points.reshape((-1, len(np_points)))
+        np_points = np_points[:, :n_coords]
+
     return np_points

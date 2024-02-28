@@ -9,5 +9,6 @@ except PackageNotFoundError:
     pass
 
 from .radial import CameraRadial
+from .utils import to_np_point_array
 
 __all__ = ["__version__", "CameraRadial"]

@@ -1,9 +1,9 @@
-from typing import Annotated, Optional
+from typing import Annotated, Literal, Optional
 
 import cv2
 import numpy as np
 from cv2 import remap
-from pydantic import AfterValidator, ConfigDict, Field
+from pydantic import AfterValidator, ConfigDict, Field, PrivateAttr
 from pydantic.dataclasses import dataclass
 
 from pupil_labs.camera import opencv_funcs
@@ -54,8 +54,10 @@ class CameraRadial(CameraRadialBase):
     camera_matrix: CameraMatrix
     distortion_coefficients: Optional[DistortionCoefficients] = None
 
-    _undistort_rectify_map = None
-    _optimal_undistorted_camera_matrix = None
+    _undistort_rectify_map: Optional[
+        tuple[CT.UndistortRectifyMap, CT.UndistortRectifyMap]
+    ] = None
+    _optimal_undistorted_camera_matrix: Optional[CT.CameraMatrixLike] = None
 
     @property
     def optimal_undistorted_camera_matrix(self):
@@ -100,21 +102,32 @@ class CameraRadial(CameraRadialBase):
         return remapped
 
     def undistort_points(
-        self, points_2d: CT.Points2DLike, use_distortion: bool = True
+        self,
+        points_2d: CT.Points2DLike,
+        use_distortion: bool = True,
+        pixel_values=False,
+        rectify=False,
     ) -> CT.Points3D:
-        distortion_coefficients = self.distortion_coefficients
+        distortion_coefficients = (
+            self.distortion_coefficients if use_distortion else None
+        )
         if not use_distortion:
             distortion_coefficients = None
+        new_camera_matrix = None
+        if pixel_values:
+            new_camera_matrix = self.camera_matrix
+            if rectify:
+                new_camera_matrix = self.optimal_undistorted_camera_matrix
         return opencv_funcs.undistort_points(
-            points_2d, self.camera_matrix, distortion_coefficients
+            points_2d, self.camera_matrix, distortion_coefficients, new_camera_matrix
         )
 
     def project_points(
         self, points_3d: CT.Points3DLike, use_distortion: bool = True
     ) -> CT.Points2D:
-        distortion_coefficients = self.distortion_coefficients
-        if not use_distortion:
-            distortion_coefficients = None
+        distortion_coefficients = (
+            self.distortion_coefficients if use_distortion else None
+        )
         return opencv_funcs.project_points(
             points_3d, self.camera_matrix, distortion_coefficients
         )

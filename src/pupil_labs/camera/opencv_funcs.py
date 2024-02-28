@@ -3,7 +3,7 @@ from typing import Optional
 import cv2
 import numpy as np
 
-from pupil_labs.camera.utils import convert_points_to_unstructured_numpy
+from pupil_labs.camera.utils import to_np_point_array
 
 from . import types as CT
 
@@ -25,7 +25,7 @@ def undistort_points(
 ) -> CT.Points3D:
     distortion_coefficients = coalesce_distortion_coefficients(distortion_coefficients)
     camera_matrix = np.asarray(camera_matrix, dtype=np.float64)
-    np_points_2d = convert_points_to_unstructured_numpy(points_2d).squeeze()
+    np_points_2d = to_np_point_array(points_2d).squeeze()
     np_undistorted_points_2d = cv2.undistortPointsIter(
         src=np_points_2d,
         cameraMatrix=camera_matrix,
@@ -49,7 +49,7 @@ def project_points(
     distortion_coefficients = coalesce_distortion_coefficients(distortion_coefficients)
     camera_matrix = np.asarray(camera_matrix, dtype=np.float64)
 
-    np_points_3d = convert_points_to_unstructured_numpy(points_3d).squeeze()
+    np_points_3d = to_np_point_array(points_3d)
     if np_points_3d.shape[1] == 2:
         np_points_3d = cv2.convertPointsToHomogeneous(np_points_3d)
 
