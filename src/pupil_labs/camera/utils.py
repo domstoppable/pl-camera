@@ -2,9 +2,8 @@ from typing import Optional
 
 import numpy as np
 import numpy.typing as npt
-from numpy.lib.recfunctions import structured_to_unstructured
-
 import pupil_labs.camera.types as CT
+from numpy.lib.recfunctions import structured_to_unstructured
 
 # import cv2
 # import numpy as np
@@ -122,7 +121,7 @@ def to_np_point_array(
             )
         np_points = structured_to_unstructured(points, dtype=np.float64)[:, :n_coords]
     else:
-        np_points = np.asarray(points, dtype=np.float64)
+        np_points = np.asarray(points, dtype=np.float64).squeeze()
         data_n_coords = (
             np_points.shape[0] if np_points.ndim == 1 else np_points.shape[1]
         )

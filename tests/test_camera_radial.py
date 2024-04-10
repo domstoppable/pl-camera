@@ -1,7 +1,6 @@
 import numpy as np
 import pytest
 from numpy.testing import assert_almost_equal
-
 from pupil_labs.camera import CameraRadial
 from pupil_labs.camera import types as CT
 

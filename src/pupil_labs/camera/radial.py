@@ -3,12 +3,11 @@ from typing import Annotated, Literal, Optional
 import cv2
 import numpy as np
 from cv2 import remap
-from pydantic import AfterValidator, ConfigDict, Field, PrivateAttr
-from pydantic.dataclasses import dataclass
-
 from pupil_labs.camera import opencv_funcs
 from pupil_labs.camera import types as CT
 from pupil_labs.camera.base import CameraBase
+from pydantic import AfterValidator, ConfigDict, Field, PrivateAttr
+from pydantic.dataclasses import dataclass
 
 
 class CameraRadialBase(CameraBase):
@@ -17,9 +16,12 @@ class CameraRadialBase(CameraBase):
 
 def check_camera_matrix(camera_matrix: CT.CameraMatrixLike) -> CT.CameraMatrix:
     camera_matrix = np.asarray(camera_matrix, dtype=np.float64)
-    assert camera_matrix.shape == (
-        3,
-        3,
+    assert (
+        camera_matrix.shape
+        == (
+            3,
+            3,
+        )
     ), f"camera_matrix should have 3x3 shape, got {'x'.join(map(str, camera_matrix.shape))}"
     return camera_matrix
 
