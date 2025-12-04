@@ -2,7 +2,7 @@
 name = "pupil-labs-camera"
 description = "Utilities for handling cameras."
 authors = [{ name = "Pupil Labs GmbH", email = "info@pupil-labs.com" }]
-license = { text = "Proprietary" }
+license = { text = "MIT" }
 readme = "README.md"
 requires-python = ">=3.10, <4.0"
 keywords = []
@@ -30,8 +30,12 @@ Repository = "https://github.com/pupil-labs/pl-camera"
 Issues = "https://github.com/pupil-labs/pl-camera/issues"
 
 
-[tool.uv]
-dev-dependencies = [
+[build-system]
+requires = ["hatchling", "uv-dynamic-versioning"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
     "pytest>=8.2",
     "pre-commit>=2.20.0",
     "mypy>=0.991",
@@ -40,9 +44,7 @@ dev-dependencies = [
     "pytest-cov>=4.0.0",
 
     # stubs
-    # "opencv-stubs",
-    # "types-protobuf",
-    # "pandas-stubs",
+    "opencv-stubs",
 
     # docs
     "markdown-callouts>=0.4",
@@ -59,10 +61,6 @@ dev-dependencies = [
     # YORE: EOL 3.10: Remove line.
     "tomli>=2.0; python_version < '3.11'",
 ]
-
-[build-system]
-requires = ["hatchling", "uv-dynamic-versioning"]
-build-backend = "hatchling.build"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
