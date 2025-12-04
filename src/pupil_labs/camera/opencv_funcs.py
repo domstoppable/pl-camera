@@ -12,7 +12,7 @@ def undistort_image(
     distortion_coefficients: CT.DistortionCoefficientsLike,
 ) -> CT.Image:
     distortion_coefficients = coalesce_distortion_coefficients(distortion_coefficients)
-    return cv2.undistort(image, camera_matrix, distortion_coefficients)  # type: ignore
+    return cv2.undistort(image, camera_matrix, distortion_coefficients)
 
 
 def undistort_points(
@@ -30,7 +30,7 @@ def undistort_points(
         src=np_points_2d,
         cameraMatrix=camera_matrix,
         distCoeffs=coalesced_distortion_coefficients,
-        R=None,  # type: ignore
+        R=None,
         P=new_camera_matrix,
         criteria=(cv2.TERM_CRITERIA_COUNT | cv2.TERM_CRITERIA_EPS, 100, 0.0001),
     )
@@ -101,7 +101,7 @@ def undistort_rectify_map(
     distortion_coefficients = coalesce_distortion_coefficients(distortion_coefficients)
 
     map1, map2 = cv2.initUndistortRectifyMap(
-        camera_matrix,  # type: ignore
+        camera_matrix,
         distortion_coefficients,
         None,
         new_camera_matrix,
