@@ -1,8 +1,9 @@
 import numpy as np
 import pytest
 from numpy.testing import assert_almost_equal
+
 from pupil_labs.camera import CameraRadial
-from pupil_labs.camera import types as CT
+from pupil_labs.camera import custom_types as CT
 
 
 @pytest.fixture
@@ -62,9 +63,9 @@ def test_unproject_points(camera_radial: CameraRadial, points):
     "points",
     [
         np.array([(-0.75170, -0.55260), (0.32508, 0.08498)]),  # unstructured
-        np.array(
-            [[[-0.75170, -0.55260], [0.32508, 0.08498]]]
-        ),  # unsqueezed unstructured
+        np.array([
+            [[-0.75170, -0.55260], [0.32508, 0.08498]]
+        ]),  # unsqueezed unstructured
         np.array(
             [(-0.75170, -0.55260), (0.32508, 0.08498)],
             dtype=[("x", np.float32), ("y", np.float32)],
@@ -92,9 +93,10 @@ def test_project_points_without_distortion(camera_radial: CameraRadial):
 def test_undistort_points_without_distortion(camera_radial: CameraRadial):
     points = np.array([(100.3349, 200.2458), (799.9932, 599.9996)])
     undistorted = camera_radial.undistort_points(points, use_distortion=False)
-    expected = np.array(
-        [[-0.59947633, -0.44022776, 1.0], [0.31355363, 0.08201807, 1.0]]
-    )
+    expected = np.array([
+        [-0.59947633, -0.44022776, 1.0],
+        [0.31355363, 0.08201807, 1.0],
+    ])
     assert_almost_equal(undistorted, expected, decimal=4)
 
 
@@ -102,9 +104,9 @@ def test_undistort_points_without_distortion(camera_radial: CameraRadial):
     "points",
     [
         np.array([(-0.75170, -0.55260, 1.0), (0.32508, 0.08498, 1.0)]),  # unstructured
-        np.array(
-            [[[-0.75170, -0.55260, 1.0], [0.32508, 0.08498, 1.0]]]
-        ),  # unsqueezed unstructured
+        np.array([
+            [[-0.75170, -0.55260, 1.0], [0.32508, 0.08498, 1.0]]
+        ]),  # unsqueezed unstructured
         np.array(
             [(-0.75170, -0.55260, 1.0), (0.32508, 0.08498, 1.0)],
             dtype=[("x", np.float32), ("y", np.float32), ("z", np.float32)],

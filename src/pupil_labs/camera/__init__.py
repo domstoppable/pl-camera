@@ -1,14 +1,11 @@
 """Top-level entry-point for the pupil_labs.camera package"""
 
+import contextlib
 from importlib.metadata import PackageNotFoundError, version
 
-try:
+with contextlib.suppress(PackageNotFoundError):
     __version__ = version("pupil_labs.camera")
-except PackageNotFoundError:
-    # package is not installed
-    pass
 
 from .radial import CameraRadial
-from .utils import to_np_point_array
 
-__all__ = ["__version__", "CameraRadial"]
+__all__ = ["CameraRadial", "__version__"]

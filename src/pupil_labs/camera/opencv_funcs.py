@@ -1,10 +1,9 @@
-from typing import Any, NamedTuple, Optional
-
 import cv2
 import numpy as np
+
 from pupil_labs.camera.utils import to_np_point_array
 
-from . import types as CT
+from . import custom_types as CT
 
 
 def undistort_image(
@@ -20,7 +19,7 @@ def undistort_points(
     points_2d: CT.Points2DLike,
     camera_matrix: CT.CameraMatrixLike,
     distortion_coefficients: CT.DistortionCoefficientsLike = None,
-    new_camera_matrix: Optional[CT.CameraMatrixLike] = None,
+    new_camera_matrix: CT.CameraMatrixLike | None = None,
 ) -> CT.Points3D:
     coalesced_distortion_coefficients = coalesce_distortion_coefficients(
         distortion_coefficients
@@ -47,7 +46,7 @@ def convert_points_to_homogeneous(points: CT.Points2DLike) -> CT.Points3D:
         np_points_3d = np_points_3d.squeeze()
 
     if np_points_3d.shape[1] != 3:
-        np_points_3d = cv2.convertPointsToHomogeneous(np_points_3d)
+        np_points_3d = cv2.convertPointsToHomogeneous(np_points_3d).astype(np.float64)
 
     return np_points_3d
 
@@ -56,7 +55,7 @@ def _project_points(
     points_3d: CT.Points3DLike,
     camera_matrix: CT.CameraMatrixLike,
     distortion_coefficients: CT.DistortionCoefficientsLike = None,
-):
+) -> tuple[CT.Points2D, np.ndarray]:
     rvec = tvec = np.zeros((1, 1, 3))
 
     coalesced_distortion_coefficients = coalesce_distortion_coefficients(
@@ -97,7 +96,7 @@ def undistort_rectify_map(
     width: int,
     height: int,
     distortion_coefficients: CT.DistortionCoefficientsLike = None,
-    new_camera_matrix: Optional[CT.CameraMatrixLike] = None,
+    new_camera_matrix: CT.CameraMatrixLike | None = None,
 ) -> tuple[CT.UndistortRectifyMap, CT.UndistortRectifyMap]:
     distortion_coefficients = coalesce_distortion_coefficients(distortion_coefficients)
 
@@ -107,14 +106,14 @@ def undistort_rectify_map(
         None,
         new_camera_matrix,
         (width, height),
-        cv2.CV_32FC1,  # type: ignore
+        cv2.CV_32FC1,
     )
     return map1, map2
 
 
 def coalesce_distortion_coefficients(
     distortion_coefficients: CT.DistortionCoefficientsLike,
-):
+) -> CT.DistortionCoefficients:
     if distortion_coefficients is None:
         distortion_coefficients = []
     return np.asarray(distortion_coefficients, dtype=np.float64)

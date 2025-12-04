@@ -1,11 +1,10 @@
-import enum
-from typing import Optional, Sequence
+from collections.abc import Sequence
 
 from numpy import float32, float64, uint8
 from numpy.typing import NDArray
 
 CameraMatrixLike = NDArray[float32 | float64] | Sequence[Sequence[float]]
-DistortionCoefficientsLike = Optional[NDArray[float32 | float64] | Sequence[float]]
+DistortionCoefficientsLike = (NDArray[float32 | float64] | Sequence[float]) | None
 CameraMatrix = NDArray[float64]
 DistortionCoefficients = NDArray[float64]
 Image = NDArray[uint8]
