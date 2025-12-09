@@ -1,10 +1,11 @@
 from functools import cached_property
+from typing import Literal, overload
 
 import cv2
 import numpy as np
 
 from pupil_labs.camera import custom_types as CT
-from pupil_labs.camera import opencv_funcs
+from pupil_labs.camera import opencv_funcs, utils
 
 
 class CameraRadial:
@@ -136,20 +137,38 @@ class CameraRadial:
             map2,
             interpolation=cv2.INTER_LINEAR,
             borderValue=0,
-        )
+        )  # type: ignore
         return remapped
 
+    @overload
+    def undistort_points(
+        self,
+        points_2d: CT.Points2DLike,
+        use_distortion: bool = True,
+        *,
+        reproject_to_image: Literal[False] = False,
+        use_optimal_camera_matrix: bool = False,
+    ) -> CT.Points3D: ...
+    @overload
+    def undistort_points(
+        self,
+        points_2d: CT.Points2DLike,
+        use_distortion: bool = True,
+        *,
+        reproject_to_image: Literal[True] = True,
+        use_optimal_camera_matrix: bool = False,
+    ) -> CT.Points2D: ...
     def undistort_points(
         self,
         points_2d: CT.Points2DLike,
         use_distortion: bool = True,
         reproject_to_image: bool = False,
         use_optimal_camera_matrix: bool = False,
-    ) -> CT.Points3D:
+    ) -> CT.Points3D | CT.Points2D:
         """Undistorts 2D image points using the camera's intrinsics.
 
         Args:
-            points_2d: Array-like of 2D points to be undistorted.
+            points_2d: Array-like of 2D point(s) to be undistorted.
             use_distortion: If True, applies distortion correction using the camera's
                 distortion coefficients. If False, ignores distortion correction.
             reproject_to_image: If True, reprojects undistorted points back to the image
@@ -158,6 +177,12 @@ class CameraRadial:
                 reprojection.
 
         """
+        points_2d = utils.to_np_point_array(points_2d)
+
+        input_dim = points_2d.ndim
+        if input_dim == 1:
+            points_2d = points_2d[np.newaxis, :]
+
         if use_optimal_camera_matrix and not reproject_to_image:
             raise ValueError(
                 "use_optimal_camera_matrix can only be True when reproject_to_image is True"  # noqa: E501
@@ -175,9 +200,19 @@ class CameraRadial:
         else:
             new_camera_matrix = None
 
-        return opencv_funcs.undistort_points(
+        points_undistorted = opencv_funcs.undistort_points(
             points_2d, self.camera_matrix, distortion_coefficients, new_camera_matrix
-        )
+        ).reshape(-1, 3)
+
+        if reproject_to_image:
+            points_undistorted = (
+                points_undistorted[:, :2] / points_undistorted[:, 2, np.newaxis]
+            )
+
+        if input_dim == 1:
+            points_undistorted = points_undistorted[0]
+
+        return points_undistorted
 
     def project_points(
         self,
