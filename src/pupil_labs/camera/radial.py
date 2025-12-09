@@ -137,7 +137,7 @@ class CameraRadial:
             map2,
             interpolation=cv2.INTER_LINEAR,
             borderValue=0,
-        )  # type: ignore
+        )
         return remapped
 
     @overload
