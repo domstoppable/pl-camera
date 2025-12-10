@@ -132,6 +132,9 @@ class CameraRadial:
         else:
             map1, map2 = self._undistort_rectify_map
 
+        # This implementation uses cv2.remap with a precomputed map, instead of
+        # cv2.undistort. This is significantly faster when undistorting multiple images
+        # because the undistortion maps are computed only once.
         remapped: CT.Image = cv2.remap(
             image,
             map1,
