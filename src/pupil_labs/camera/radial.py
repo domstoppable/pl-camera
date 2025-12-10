@@ -297,7 +297,7 @@ class CameraRadial:
         if not len(points):
             raise ValueError("points array is empty")
 
-        if hasattr(points, "dtype") and points.dtype.names is not None:  # type: ignore
+        if hasattr(points, "dtype") and points.dtype.names is not None:
             np_points = structured_to_unstructured(points, dtype=np.float64)  # type: ignore
         else:
             np_points = np.asarray(points, dtype=np.float64)
