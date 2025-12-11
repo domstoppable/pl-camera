@@ -226,24 +226,25 @@ class CameraRadial:
         if input_dim == 1:
             points_3d = points_3d[np.newaxis, :]
 
+        distortion_coefficients = None
         if use_distortion:
             distortion_coefficients = self.distortion_coefficients
-        else:
-            distortion_coefficients = None
 
+        camera_matrix = self.camera_matrix
         if use_optimal_camera_matrix:
             camera_matrix = self.optimal_camera_matrix
-        else:
-            camera_matrix = self.camera_matrix
 
-        points_2d = opencv_funcs.project_points(
-            points_3d, camera_matrix, distortion_coefficients
-        ).reshape(-1, 2)
+        rvec = tvec = np.zeros((1, 1, 3))
 
-        if input_dim == 1:
-            points_2d = points_2d[0]
+        projected, _ = cv2.projectPoints(
+            objectPoints=points_3d,
+            rvec=rvec,
+            tvec=tvec,
+            cameraMatrix=camera_matrix,
+            distCoeffs=distortion_coefficients,
+        )
 
-        return points_2d
+        return np.array(projected).astype(np.float64).squeeze()
 
     def undistort_points(
         self,
