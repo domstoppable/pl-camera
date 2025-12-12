@@ -270,7 +270,7 @@ class Camera:
         )
         return undistorted_2d.squeeze()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             f"{self.__class__.__name__}("
             + ", ".join(
