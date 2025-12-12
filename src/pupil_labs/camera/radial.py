@@ -82,14 +82,6 @@ class CameraRadial:
                 )
             self._distortion_coefficients = distortion_coefficients
 
-    @property
-    def use_optimal_camera_matrix(self) -> bool:
-        return self._use_optimal_camera_matrix
-
-    @use_optimal_camera_matrix.setter
-    def use_optimal_camera_matrix(self, value: bool) -> None:
-        self._use_optimal_camera_matrix = bool(value)
-
     @cached_property
     def optimal_camera_matrix(self) -> CT.CameraMatrix:
         """The "optimal" camera matrix for undistorting images.
@@ -136,7 +128,11 @@ class CameraRadial:
             ),
         )
 
-    def undistort_image(self, image: CT.Image) -> CT.Image:
+    def undistort_image(
+        self,
+        image: CT.Image,
+        use_optimal_camera_matrix: bool | None = None,
+    ) -> CT.Image:
         """Return an undistorted image
 
         This implementation uses cv2.remap with a precomputed map, instead of
@@ -145,9 +141,15 @@ class CameraRadial:
 
         Args:
             image: Image array
+            use_optimal_camera_matrix: If True applies optimal camera matrix
 
         """
-        map1, map2 = self._undistort_rectify_map
+        map1, map2 = (
+            self._optimal_undistort_rectify_map
+            if self._parse_use_optimal_camera_matrix(use_optimal_camera_matrix)
+            else self._undistort_rectify_map
+        )
+
         remapped: CT.Image = cv2.remap(
             image,
             map1,
@@ -157,8 +159,31 @@ class CameraRadial:
         )
         return remapped
 
+    def _parse_use_optimal_camera_matrix(self, use_optimal_camera_matrix: bool | None):
+        if use_optimal_camera_matrix is None:
+            return self.use_optimal_camera_matrix
+        return use_optimal_camera_matrix
+
+    def _get_undistort_rectify_map(self, use_optimal_camera_matrix: bool | None):
+        if self._parse_use_optimal_camera_matrix(use_optimal_camera_matrix):
+            return self._optimal_undistort_rectify_map
+        return self._undistort_rectify_map
+
+    def _get_unprojection_camera_matrix(self, use_optimal_camera_matrix: bool | None):
+        return (
+            self.optimal_camera_matrix
+            if self._parse_use_optimal_camera_matrix(use_optimal_camera_matrix)
+            else self.camera_matrix
+        )
+
+    def _get_distortion_coefficients(self, use_distortion: bool):
+        return self.distortion_coefficients if use_distortion else None
+
     def unproject_points(
-        self, points_2d: CT.Points2DLike, use_distortion: bool = True
+        self,
+        points_2d: CT.Points2DLike,
+        use_distortion: bool = True,
+        use_optimal_camera_matrix: bool | None = None,
     ) -> CT.Points3D:
         """Unprojects 2D image points to 3D space using the camera's intrinsics.
 
@@ -166,17 +191,12 @@ class CameraRadial:
             points_2d: Array-like of 2D point(s) to be unprojected.
             use_distortion: If True, applies distortion correction using the camera's
                 distortion coefficients. If False, ignores distortion correction.
+            use_optimal_camera_matrix: If True applies optimal camera matrix
 
         """
         points_2d = to_np_point_array(points_2d, 2)
-
-        camera_matrix = self.camera_matrix
-        if self.use_optimal_camera_matrix:
-            camera_matrix = self.optimal_camera_matrix
-
-        distortion_coefficients = None
-        if use_distortion:
-            distortion_coefficients = self.distortion_coefficients
+        distortion_coefficients = self._get_distortion_coefficients(use_distortion)
+        camera_matrix = self._get_unprojection_camera_matrix(use_optimal_camera_matrix)
 
         points_3d = cv2.undistortPoints(
             src=points_2d,
@@ -188,7 +208,10 @@ class CameraRadial:
         return points_3d.squeeze()
 
     def project_points(
-        self, points_3d: CT.Points3DLike, use_distortion: bool = True
+        self,
+        points_3d: CT.Points3DLike,
+        use_distortion: bool = True,
+        use_optimal_camera_matrix: bool | None = None,
     ) -> CT.Points2D:
         """Projects 3D points onto the 2D image plane using the camera's intrinsics.
 
@@ -196,17 +219,12 @@ class CameraRadial:
             points_3d: Array of 3D point(s) to be projected.
             use_distortion: If True, applies distortion using the camera's distortion
                 coefficients. If False, ignores distortion.
+            use_optimal_camera_matrix: If True applies optimal camera matrix
 
         """
         points_3d = to_np_point_array(points_3d, 3)
-
-        distortion_coefficients = None
-        if use_distortion:
-            distortion_coefficients = self.distortion_coefficients
-
-        camera_matrix = self.camera_matrix
-        if self.use_optimal_camera_matrix:
-            camera_matrix = self.optimal_camera_matrix
+        distortion_coefficients = self._get_distortion_coefficients(use_distortion)
+        camera_matrix = self._get_unprojection_camera_matrix(use_optimal_camera_matrix)
 
         rvec = tvec = np.zeros((1, 1, 3))
 
@@ -220,18 +238,20 @@ class CameraRadial:
 
         return np.array(projected).astype(np.float64).squeeze()
 
-    def undistort_points(self, points_2d: CT.Points2DLike) -> CT.Points2D:
+    def undistort_points(
+        self,
+        points_2d: CT.Points2DLike,
+        use_optimal_camera_matrix: bool | None = None,
+    ) -> CT.Points2D:
         """Undistorts 2D image points using the camera's intrinsics.
 
         Args:
             points_2d: Array-like of 2D point(s) to be undistorted.
+            use_optimal_camera_matrix: If True applies optimal camera matrix
 
         """
         points_2d = to_np_point_array(points_2d, 2)
-
-        camera_matrix = self.camera_matrix
-        if self.use_optimal_camera_matrix:
-            camera_matrix = self.optimal_camera_matrix
+        camera_matrix = self._get_unprojection_camera_matrix(use_optimal_camera_matrix)
 
         undistorted_2d = cv2.undistortPoints(
             src=points_2d,
