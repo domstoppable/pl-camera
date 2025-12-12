@@ -83,11 +83,11 @@ class CameraRadial:
             self._distortion_coefficients = distortion_coefficients
 
     @property
-    def use_optimal_camera_matrix(self):
+    def use_optimal_camera_matrix(self) -> bool:
         return self._use_optimal_camera_matrix
 
     @use_optimal_camera_matrix.setter
-    def use_optimal_camera_matrix(self, value: bool):
+    def use_optimal_camera_matrix(self, value: bool) -> None:
         self._use_optimal_camera_matrix = bool(value)
 
     @cached_property
