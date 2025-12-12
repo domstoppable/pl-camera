@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from numpy.testing import assert_almost_equal
 
-from pupil_labs.camera import CameraRadial
+from pupil_labs.camera import Camera
 from pupil_labs.camera import custom_types as CT
 
 
@@ -25,9 +25,7 @@ def camera_radial():
         0.05234352,
         0.02383326,
     ]
-    return CameraRadial(
-        image_width, image_height, camera_matrix, distortion_coefficients
-    )
+    return Camera(image_width, image_height, camera_matrix, distortion_coefficients)
 
 
 @pytest.mark.parametrize(
@@ -39,7 +37,7 @@ def camera_radial():
         (100, 200),  # tuple
     ],
 )
-def test_unproject_point(camera_radial: CameraRadial, point):
+def test_unproject_point(camera_radial: Camera, point):
     expected = np.array([-1.15573178, -0.67095352, 1.0])
     unprojected = camera_radial.unproject_points(point)
     assert_almost_equal(unprojected, np.asarray(expected), decimal=3)
@@ -68,7 +66,7 @@ def test_unproject_point(camera_radial: CameraRadial, point):
         ((100, 200), (800, 600)),  # tuple of tuples
     ],
 )
-def test_unproject_points(camera_radial: CameraRadial, points):
+def test_unproject_points(camera_radial: Camera, points):
     expected = np.array([
         [-1.15573178, -0.67095352, 1.0],
         [-0.01829243, -0.01627422, 1.0],
@@ -77,14 +75,14 @@ def test_unproject_points(camera_radial: CameraRadial, points):
     assert_almost_equal(unprojected, np.asarray(expected), decimal=3)
 
 
-def test_unproject_point_without_distortion(camera_radial: CameraRadial):
+def test_unproject_point_without_distortion(camera_radial: Camera):
     point = np.array([100.3349, 200.2458])
     unprojected = camera_radial.unproject_points(point, use_distortion=False)
     expected = np.array([-0.80300261, -0.46495873, 1.0])
     assert_almost_equal(unprojected, expected, decimal=4)
 
 
-def test_unproject_points_without_distortion(camera_radial: CameraRadial):
+def test_unproject_points_without_distortion(camera_radial: Camera):
     points = np.array([(100.3349, 200.2458), (799.9932, 599.9996)])
     unprojected = camera_radial.unproject_points(points, use_distortion=False)
     expected = np.array([
@@ -102,7 +100,7 @@ def test_unproject_points_without_distortion(camera_radial: CameraRadial):
         (-0.75170, -0.55260, 1.0),  # tuple
     ],
 )
-def test_project_point(camera_radial: CameraRadial, point: CT.Points2DLike):
+def test_project_point(camera_radial: Camera, point: CT.Points2DLike):
     expected = np.array([276.45064393, 218.50131053])
     projected = camera_radial.project_points(point)
     assert_almost_equal(projected, expected, decimal=4)
@@ -128,27 +126,27 @@ def test_project_point(camera_radial: CameraRadial, point: CT.Points2DLike):
         ((-0.75170, -0.55260, 1.0), (0.32508, 0.08498, 1.0)),  # tuple of tuples
     ],
 )
-def test_project_points(camera_radial: CameraRadial, points: CT.Points2DLike):
+def test_project_points(camera_radial: Camera, points: CT.Points2DLike):
     expected = np.array([[276.45064393, 218.50131053], [1096.58550912, 687.76068265]])
     projected = camera_radial.project_points(points)
     assert_almost_equal(projected, expected, decimal=4)
 
 
-def test_project_point_without_distortion(camera_radial: CameraRadial):
+def test_project_point_without_distortion(camera_radial: Camera):
     point = np.array([-0.59947633, -0.44022776, 1.0])
     projected = camera_radial.project_points(point, use_distortion=False)
     expected = np.array([281.80279595, 222.27963684])
     assert_almost_equal(projected, expected, decimal=4)
 
 
-def test_undistort_point(camera_radial: CameraRadial):
+def test_undistort_point(camera_radial: Camera):
     point = np.array([10, 10])
     undistorted = camera_radial.undistort_points(point)
     expected = np.array([-688.71195284, -518.85317532])
     assert_almost_equal(undistorted, expected, decimal=4)
 
 
-def test_undistort_points(camera_radial: CameraRadial):
+def test_undistort_points(camera_radial: Camera):
     points = np.array([[10, 10], [50, 50], [100, 100], [600, 600]])
     undistorted = camera_radial.undistort_points(points)
     expected = np.array([
@@ -161,17 +159,17 @@ def test_undistort_points(camera_radial: CameraRadial):
 
 
 @pytest.mark.parametrize("width", [-1, 0])
-def test_invalid_width(camera_radial: CameraRadial, width: int):
+def test_invalid_width(camera_radial: Camera, width: int):
     with pytest.raises(ValueError):
-        CameraRadial(width, 1000, [[1, 2, 3], [1, 2, 3], [1, 2, 3]], [1, 2, 3, 4])
+        Camera(width, 1000, [[1, 2, 3], [1, 2, 3], [1, 2, 3]], [1, 2, 3, 4])
     with pytest.raises(ValueError):
         camera_radial.pixel_width = width
 
 
 @pytest.mark.parametrize("height", [-1, 0])
-def test_invalid_height(camera_radial: CameraRadial, height: int):
+def test_invalid_height(camera_radial: Camera, height: int):
     with pytest.raises(ValueError):
-        CameraRadial(1000, height, [[1, 2, 3], [1, 2, 3], [1, 2, 3]], [1, 2, 3, 4])
+        Camera(1000, height, [[1, 2, 3], [1, 2, 3], [1, 2, 3]], [1, 2, 3, 4])
     with pytest.raises(ValueError):
         camera_radial.pixel_height = height
 
@@ -186,10 +184,10 @@ def test_invalid_height(camera_radial: CameraRadial, height: int):
     ],
 )
 def test_invalid_camera_matrix(
-    camera_radial: CameraRadial, camera_matrix: CT.CameraMatrixLike
+    camera_radial: Camera, camera_matrix: CT.CameraMatrixLike
 ):
     with pytest.raises(ValueError):
-        CameraRadial(1000, 1000, camera_matrix, [1, 2, 3, 4])
+        Camera(1000, 1000, camera_matrix, [1, 2, 3, 4])
     with pytest.raises(ValueError):
         camera_radial.camera_matrix = camera_matrix
 
@@ -212,12 +210,10 @@ def test_invalid_camera_matrix(
     ],
 )
 def test_invalid_distortion_coefficients(
-    camera_radial: CameraRadial, distortion_coefficients: CT.DistortionCoefficientsLike
+    camera_radial: Camera, distortion_coefficients: CT.DistortionCoefficientsLike
 ):
     with pytest.raises(ValueError):
-        CameraRadial(
-            1000, 1000, [[1, 2, 3], [1, 2, 3], [1, 2, 3]], distortion_coefficients
-        )
+        Camera(1000, 1000, [[1, 2, 3], [1, 2, 3], [1, 2, 3]], distortion_coefficients)
     with pytest.raises(ValueError):
         camera_radial.distortion_coefficients = distortion_coefficients
 
@@ -234,9 +230,9 @@ def test_invalid_distortion_coefficients(
     ],
 )
 def test_valid_distortion_coefficients(
-    camera_radial: CameraRadial, distortion_coefficients: CT.DistortionCoefficientsLike
+    camera_radial: Camera, distortion_coefficients: CT.DistortionCoefficientsLike
 ):
-    CameraRadial(1000, 1000, [[1, 2, 3], [1, 2, 3], [1, 2, 3]], distortion_coefficients)
+    Camera(1000, 1000, [[1, 2, 3], [1, 2, 3], [1, 2, 3]], distortion_coefficients)
     camera_radial.distortion_coefficients = distortion_coefficients
 
 
@@ -263,7 +259,7 @@ def test_valid_distortion_coefficients(
         [[10, 10, 1], [10, 10, 1]],
     ],
 )
-def test_invalid_unproject_points_shapes(camera_radial: CameraRadial, points):
+def test_invalid_unproject_points_shapes(camera_radial: Camera, points):
     with pytest.raises(ValueError, match="2 coordinate"):
         camera_radial.unproject_points(points)
 
@@ -276,6 +272,6 @@ def test_invalid_unproject_points_shapes(camera_radial: CameraRadial, points):
         [[10, 10], [10, 10]],
     ],
 )
-def test_invalid_project_points_shapes(camera_radial: CameraRadial, points):
+def test_invalid_project_points_shapes(camera_radial: Camera, points):
     with pytest.raises(ValueError, match="3 coordinate"):
         camera_radial.project_points(points)

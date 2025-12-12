@@ -8,7 +8,7 @@ from pupil_labs.camera import custom_types as CT
 from pupil_labs.camera.utils import to_np_point_array
 
 
-class CameraRadial:
+class Camera:
     _distortion_coefficients: CT.DistortionCoefficients | None
 
     def __init__(
