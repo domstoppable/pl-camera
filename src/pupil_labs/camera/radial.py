@@ -229,10 +229,6 @@ class CameraRadial:
         """
         points_2d = to_np_point_array(points_2d, 2)
 
-        input_dim = points_2d.ndim
-        if input_dim == 1:
-            points_2d = points_2d[np.newaxis, :]
-
         camera_matrix = self.camera_matrix
         if self.use_optimal_camera_matrix:
             camera_matrix = self.optimal_camera_matrix
