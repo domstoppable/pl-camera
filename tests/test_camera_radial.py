@@ -43,6 +43,13 @@ def test_unproject_point(camera_radial: Camera, point):
     assert_almost_equal(unprojected, np.asarray(expected), decimal=3)
 
 
+def test_unproject_point_optimal(camera_radial: Camera):
+    point = np.array([100.3349, 200.2458])
+    expected = np.array([-3.37628209, -1.66810606, 1.0])
+    unprojected = camera_radial.unproject_points(point, use_optimal_camera_matrix=True)
+    assert_almost_equal(unprojected, np.asarray(expected), decimal=3)
+
+
 @pytest.mark.parametrize(
     "points",
     [
@@ -82,6 +89,15 @@ def test_unproject_point_without_distortion(camera_radial: Camera):
     assert_almost_equal(unprojected, expected, decimal=4)
 
 
+def test_unproject_point_without_distortion_optimal(camera_radial: Camera):
+    point = np.array([100.3349, 200.2458])
+    unprojected = camera_radial.unproject_points(
+        point, use_distortion=False, use_optimal_camera_matrix=True
+    )
+    expected = np.array([-1.14129205, -0.55826439, 1.0])
+    assert_almost_equal(unprojected, expected, decimal=4)
+
+
 def test_unproject_points_without_distortion(camera_radial: Camera):
     points = np.array([(100.3349, 200.2458), (799.9932, 599.9996)])
     unprojected = camera_radial.unproject_points(points, use_distortion=False)
@@ -104,6 +120,13 @@ def test_project_point(camera_radial: Camera, point: CT.Points2DLike):
     expected = np.array([276.45064393, 218.50131053])
     projected = camera_radial.project_points(point)
     assert_almost_equal(projected, expected, decimal=4)
+
+
+def test_project_point_optimal(camera_radial: Camera):
+    point = np.array([-0.59947633, -0.44022776, 1.0])
+    undistorted = camera_radial.project_points(point, use_optimal_camera_matrix=True)
+    expected = np.array([497.45664004, 335.03763505])
+    assert_almost_equal(undistorted, expected, decimal=4)
 
 
 @pytest.mark.parametrize(
@@ -139,10 +162,26 @@ def test_project_point_without_distortion(camera_radial: Camera):
     assert_almost_equal(projected, expected, decimal=4)
 
 
+def test_project_point_without_distortion_optimal(camera_radial: Camera):
+    point = np.array([-0.59947633, -0.44022776, 1.0])
+    undistorted = camera_radial.project_points(
+        point, use_distortion=False, use_optimal_camera_matrix=True
+    )
+    expected = np.array([445.23836289, 289.28855095])
+    assert_almost_equal(undistorted, expected, decimal=4)
+
+
 def test_undistort_point(camera_radial: Camera):
     point = np.array([10, 10])
     undistorted = camera_radial.undistort_points(point)
     expected = np.array([-688.71195284, -518.85317532])
+    assert_almost_equal(undistorted, expected, decimal=4)
+
+
+def test_undistort_point_optimal(camera_radial: Camera):
+    point = np.array([500, 500])
+    undistorted = camera_radial.undistort_points(point, use_optimal_camera_matrix=True)
+    expected = np.array([466.53389311, 487.41463334])
     assert_almost_equal(undistorted, expected, decimal=4)
 
 
