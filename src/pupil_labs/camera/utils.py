@@ -23,7 +23,7 @@ def apply_distortion_model(
 
 
 def to_np_point_array(
-    coords: CT.Points2DLike, n_coords: int
+    coords: CT.Points2DLike | CT.Points3DLike, n_coords: int
 ) -> npt.NDArray[np.float64]:
     """Convert/validate python/numpy/structured array of coordinates into unstructured
 
