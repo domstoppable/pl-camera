@@ -280,12 +280,17 @@ class Camera:
         Args:
             points_2d: Array-like of 2D point(s) to be distorted.
             use_optimal_camera_matrix: If True applies optimal camera matrix
+
         """
         points_3d = self.unproject_points(
-            points_2d, use_distortion=False, use_optimal_camera_matrix=use_optimal_camera_matrix
+            points_2d,
+            use_distortion=False,
+            use_optimal_camera_matrix=use_optimal_camera_matrix,
         )
         distorted_points = self.project_points(
-            points_3d, use_distortion=True, use_optimal_camera_matrix=use_optimal_camera_matrix
+            points_3d,
+            use_distortion=True,
+            use_optimal_camera_matrix=use_optimal_camera_matrix,
         )
         return distorted_points
 
