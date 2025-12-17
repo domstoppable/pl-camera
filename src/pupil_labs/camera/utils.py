@@ -1,3 +1,5 @@
+from typing import cast
+
 import numpy as np
 import numpy.typing as npt
 from numpy.lib.recfunctions import structured_to_unstructured
@@ -84,9 +86,9 @@ def to_np_point_array(
 
     else:
         if arr.ndim == 3 and len(arr) == 1:
-            return arr[0]
-        else:
-            raise ValueError(
-                f"Invalid coordinate shape: {arr.shape}. "
-                f"Expected shape ({n_coords},) or (N, {n_coords})."
-            )
+            return cast(npt.NDArray[np.float64], arr[0])
+
+        raise ValueError(
+            f"Invalid coordinate shape: {arr.shape}. "
+            f"Expected shape ({n_coords},) or (N, {n_coords})."
+        )

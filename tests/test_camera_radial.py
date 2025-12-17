@@ -1,3 +1,4 @@
+import cv2
 import numpy as np
 import pytest
 from numpy.testing import assert_almost_equal
@@ -192,6 +193,19 @@ def test_unproject_points_without_distortion(camera_radial: Camera):
 def test_project_point(camera_radial: Camera, point: CT.Points3DLike):
     expected = np.array([276.45064393, 218.50131053])
     projected = camera_radial.project_points(point)
+    assert_almost_equal(projected, expected, decimal=4)
+
+
+def test_project_point_from_cv2_homogenous(camera_radial: Camera):
+    cv2_output = cv2.convertPointsToHomogeneous(
+        cv2.undistortPoints(
+            np.array([(600.0, 600)], dtype=np.float32),
+            camera_radial.camera_matrix,
+            camera_radial.distortion_coefficients,
+        )
+    )
+    expected = np.array([[600.0, 600]])
+    projected = camera_radial.project_points(cv2_output)  # type: ignore
     assert_almost_equal(projected, expected, decimal=4)
 
 
