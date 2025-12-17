@@ -66,9 +66,7 @@ def to_np_point_array(
         except Exception as e:
             raise ValueError(f"Failed to convert structured array: {e}") from e
 
-    # is_single_coord = arr.ndim == 1
     arr = np.asarray(arr).astype(np.float64)
-    # arr = np.squeeze(arr)
 
     if arr.ndim == 1:
         if len(arr) != n_coords:
