@@ -122,9 +122,10 @@ class Camera:
     def _make_undistort_rectify_map(
         self, camera_matrix: CT.CameraMatrixLike, inverse: bool = False
     ) -> CT.RectifyMap:
-        map_maker = (
-            cv2.initInverseRectificationMap if inverse else cv2.initUndistortRectifyMap
-        )
+        map_maker = cv2.initUndistortRectifyMap
+        if inverse:
+            map_maker = cv2.initInverseRectificationMap  # type: ignore
+
         return cast(
             CT.RectifyMap,
             map_maker(
