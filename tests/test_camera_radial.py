@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import cv2
 import numpy as np
 import pytest
@@ -21,6 +23,13 @@ DISTORTION_COEFFICIENTS = [
     0.05234352,
     0.02383326,
 ]
+
+
+def show(img: np.ndarray):
+    """Quickly show an image in pytest debugger"""
+    import PIL.Image
+
+    PIL.Image.fromarray(img[:, :, ::-1]).show()
 
 
 def make_point_variants(points: list[tuple[float | int, ...]]):
@@ -54,7 +63,7 @@ def make_point_variants(points: list[tuple[float | int, ...]]):
     ]
 
 
-@pytest.fixture
+@pytest.fixture  # (scope="session")
 def camera_radial():
     image_width = 1600
     image_height = 1200
@@ -75,6 +84,8 @@ def camera_radial():
 def test_various_configurations(
     distortion_coefficients, use_optimal_camera_matrix, use_distortion
 ):
+    width = 1600
+    height = 1200
     camera = Camera(1600, 1200, CAMERA_MATRIX, distortion_coefficients)
     camera.unproject_points(
         (200.0, 200.0),
@@ -82,7 +93,11 @@ def test_various_configurations(
         use_distortion=use_distortion,
     )
     camera.undistort_image(
-        np.zeros((1600, 1200), dtype=np.uint8),
+        np.zeros((height, width), dtype=np.uint8),
+        use_optimal_camera_matrix=use_optimal_camera_matrix,
+    )
+    camera.distort_image(
+        np.zeros((height, width), dtype=np.uint8),
         use_optimal_camera_matrix=use_optimal_camera_matrix,
     )
     camera.undistort_points(
@@ -580,3 +595,61 @@ def test_distort_points_edge_cases(camera_radial: Camera):
     # This test primarily ensures no crashes occur at boundaries
     assert redistorted.shape == original.shape
     assert (np.absolute(original - redistorted)).max() < 50
+
+
+@pytest.fixture  # (scope="session")
+def distorted_image(camera_radial: Camera, test_data_path: Path):
+    return cv2.imread(str((test_data_path / "chessboard.jpeg").resolve()))
+
+
+@pytest.fixture
+def undistorted_image(camera_radial: Camera, distorted_image: np.ndarray):
+    return cv2.undistort(
+        distorted_image,
+        camera_radial.camera_matrix,
+        camera_radial.distortion_coefficients,
+    )
+
+
+@pytest.fixture
+def undistorted_image_optimal(
+    camera_radial: Camera, distorted_image, undistorted_image
+):
+    return cv2.undistort(
+        distorted_image,
+        camera_radial.camera_matrix,
+        camera_radial.distortion_coefficients,
+        newCameraMatrix=camera_radial.optimal_camera_matrix,
+    )
+
+
+def test_distort_image(camera_radial: Camera, distorted_image, undistorted_image):
+    distorted = camera_radial.distort_image(undistorted_image)
+    assert distorted.shape == undistorted_image.shape
+    assert distorted.mean() == 83.77018263888888
+
+
+def test_distort_image_optimal(
+    camera_radial: Camera, distorted_image, undistorted_image_optimal
+):
+    distorted = camera_radial.distort_image(
+        undistorted_image_optimal, use_optimal_camera_matrix=True
+    )
+    assert distorted.shape == distorted_image.shape
+    assert distorted.mean() == 117.12533385416667
+
+
+def test_undistort_image(camera_radial: Camera, distorted_image, undistorted_image):
+    undistorted = camera_radial.undistort_image(distorted_image)
+    assert undistorted.shape == distorted_image.shape
+    assert undistorted.mean() == 120.6645625
+
+
+def test_undistort_image_optimal(
+    camera_radial: Camera, distorted_image, undistorted_image
+):
+    undistorted = camera_radial.undistort_image(
+        distorted_image, use_optimal_camera_matrix=True
+    )
+    assert undistorted.shape == undistorted.shape
+    assert undistorted.mean() == 132.47595399305555

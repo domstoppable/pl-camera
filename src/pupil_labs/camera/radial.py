@@ -102,71 +102,39 @@ class Camera:
         return np.array(optimal_camera_matrix, dtype=np.float64)
 
     @cached_property
-    def _undistort_rectify_map(
-        self,
-    ) -> tuple[CT.UndistortRectifyMap, CT.UndistortRectifyMap]:
+    def _undistort_rectify_map(self) -> CT.RectifyMap:
         return self._make_undistort_rectify_map(self.camera_matrix)
 
     @cached_property
-    def _distort_rectify_map(
-        self,
-    ) -> tuple[CT.DistortRectifyMap, CT.DistortRectifyMap]:
-        return self._make_distort_rectify_map(self.camera_matrix)
+    def _distort_rectify_map(self) -> CT.RectifyMap:
+        return self._make_undistort_rectify_map(self.camera_matrix, inverse=True)
 
     @cached_property
-    def _optimal_undistort_rectify_map(
-        self,
-    ) -> tuple[CT.UndistortRectifyMap, CT.UndistortRectifyMap]:
+    def _optimal_undistort_rectify_map(self) -> CT.RectifyMap:
         return self._make_undistort_rectify_map(self.optimal_camera_matrix)
 
     @cached_property
-    def _optimal_distort_rectify_map(
-        self,
-    ) -> tuple[CT.DistortRectifyMap, CT.DistortRectifyMap]:
-        return self._make_distort_rectify_map(self.optimal_camera_matrix)
+    def _optimal_distort_rectify_map(self) -> CT.RectifyMap:
+        return self._make_undistort_rectify_map(
+            self.optimal_camera_matrix, inverse=True
+        )
 
     def _make_undistort_rectify_map(
-        self, camera_matrix: CT.CameraMatrixLike
-    ) -> tuple[CT.UndistortRectifyMap, CT.UndistortRectifyMap]:
+        self, camera_matrix: CT.CameraMatrixLike, inverse: bool = False
+    ) -> CT.RectifyMap:
+        map_maker = (
+            cv2.initInverseRectificationMap if inverse else cv2.initUndistortRectifyMap
+        )
         return cast(
-            tuple[CT.UndistortRectifyMap, CT.UndistortRectifyMap],
-            cv2.initUndistortRectifyMap(
+            CT.RectifyMap,
+            map_maker(
                 self.camera_matrix,
                 self.distortion_coefficients,
                 None,
-                (camera_matrix),
+                camera_matrix,
                 (self.pixel_width, self.pixel_height),
                 cv2.CV_32FC1,
             ),
-        )
-
-    def _make_distort_rectify_map(
-        self, camera_matrix: CT.CameraMatrixLike
-    ) -> tuple[CT.DistortRectifyMap, CT.DistortRectifyMap]:
-        w_dst, h_dst = self.pixel_width, self.pixel_height
-
-        # create grid of pixel coordinates in the distorted image
-        xs = np.arange(w_dst)
-        ys = np.arange(h_dst)
-        xv, yv = np.meshgrid(xs, ys)
-        pix = np.stack((xv, yv), axis=-1).astype(np.float32)  # (h_dst, w_dst, 2)
-
-        # Convert pixel coords (u_d, v_d) in distorted image to normalized camera
-        # coords x_d = K^{-1} * [u;v;1]
-        K = np.asarray(camera_matrix, dtype=np.float64)
-        pts = pix.reshape(-1, 1, 2).astype(np.float64)
-
-        undistorted_pts = cv2.undistortPoints(
-            pts, K, self.distortion_coefficients, R=None, P=camera_matrix
-        )  # returns (N,1,2) in pixel coords of undistorted image when P provided
-
-        # undistorted_pts are pixel coordinates in the undistorted image corresponding
-        # to each distorted pixel.
-        map_xy = undistorted_pts.reshape(h_dst, w_dst, 2).astype(np.float32)
-
-        return cast(
-            tuple[CT.DistortRectifyMap, CT.DistortRectifyMap],
-            (map_xy[..., 0], map_xy[..., 1]),
         )
 
     def undistort_image(
@@ -190,7 +158,6 @@ class Camera:
             if self._parse_use_optimal_camera_matrix(use_optimal_camera_matrix)
             else self._undistort_rectify_map
         )
-
         remapped: CT.Image = cv2.remap(
             image,
             map1,
@@ -217,7 +184,7 @@ class Camera:
 
         """
         map1, map2 = (
-            self._distort_rectify_map
+            self._optimal_distort_rectify_map
             if self._parse_use_optimal_camera_matrix(use_optimal_camera_matrix)
             else self._distort_rectify_map
         )
@@ -240,7 +207,7 @@ class Camera:
 
     def _get_undistort_rectify_map(
         self, use_optimal_camera_matrix: bool | None
-    ) -> tuple[CT.UndistortRectifyMap, CT.UndistortRectifyMap]:
+    ) -> CT.RectifyMap:
         if self._parse_use_optimal_camera_matrix(use_optimal_camera_matrix):
             return self._optimal_undistort_rectify_map
         return self._undistort_rectify_map

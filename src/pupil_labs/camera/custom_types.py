@@ -19,5 +19,4 @@ Point3DLike = tuple[NumberLike, NumberLike, NumberLike]
 Points3DLike = (
     NDArray[floating] | Sequence[Sequence[NumberLike]] | list[Point3DLike] | Point3DLike
 )
-UndistortRectifyMap = NDArray[float64]
-DistortRectifyMap = NDArray[float64]
+RectifyMap = tuple[NDArray[float64], NDArray[float64]]
